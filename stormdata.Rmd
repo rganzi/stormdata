@@ -41,7 +41,7 @@ data <- downloadData()
 data <- data[, c(2, 7:8, 23:28)]
 
 # download official NOAA storm data event types
-file2url <- "https://raw.githubusercontent.com/rganzi/stormdata/master/evtype_off.csv"
+file2url <- "https://raw.githubusercontent.com/rganzi/stormdata1/master/evtype_off.csv"
 file2name <- "evtype_off.csv"
 evtype.download <- function() {
         if (!file.exists(file2name)) {
