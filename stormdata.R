@@ -4,6 +4,7 @@
 library(lubridate)
 library(stats)
 library(Hmisc)
+library(ggplot2)
 
 # download storm data
 fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
@@ -38,10 +39,41 @@ evtype.off <- evtype.download()
 # only include official NOAA storm data event types
 stormdata <- data[data$evtype %in% toupper(evtype.off$evtype), ]
 stormdata$evtype <- as.factor(tolower(stormdata$evtype))
-rm(data)
+# rm(data)
 
 # Date class
 stormdata$bgn_date <- as.Date(stormdata$bgn_date, format = "%m/%d/%Y")
+
+# damage columns calculated
+# replace abbreviations for *exp columns
+# replace.exp <- function(exp = c("propdmgexp", "cropdmgexp")) {
+#         abbs <- c("H", "K", "M", "B")
+#         digs <- c(2, 3, 6, 9)
+#         
+#         exp.var <- data.frame()
+#         for(i in 1:4) {
+#                 exp.var <- gsub(abbs[i], digs[i], stormdata[exp], ignore.case = TRUE)
+#         }
+#         exp.var <- as.integer(exp.var)
+#         exp.var[is.na(exp.var)] <- 0
+#         exp.var
+# }
+# stormdata$propdmgexp <- replace.exp("propdmgexp")
+# stormdata$cropdmgexp <- replace.exp("cropdmgexp")
+# 
+# stormdata$cropdmgexp <- as.integer(stormdata$cropdmgexp)
+# summary(data$cropdmgexp)
+# data$cropdmgexp <- as.integer(data$cropdmgexp)
+# 
+# 
+# # new variables for calculated damage values, including total damage
+# stormdata$propdmg <- stormdata$propdmg * 10^stormdata$propdmgexp
+# stormdata$cropdmg <- stormdata$cropdmg * 10^stormdata$cropdmgexp
+# stormdata$totaldmg <- stormdata$propdmg + stormdata$cropdmg
+# 
+# # remove *exp columns
+# stormdata <- stormdata[, -c(7,9)]
+
 
 # damage columns calculated
 abbs <- c("H", "K", "M", "B")
@@ -67,8 +99,6 @@ stormdata$totaldmg <- stormdata$propdmg + stormdata$cropdmg
 stormdata <- stormdata[, -c(7,9)]
 
 ## RESULTS
-library(xtable)
-library(ggplot2)
 
 # tables of total damage by event type
 byevent <- split(stormdata, stormdata$evtype)
@@ -94,7 +124,7 @@ total.cost <- function() {
 damage <- total.cost()
 
 inj <- damage[order(damage$injuries, decreasing = TRUE), c(1:2)]
-xtable(inj[1:6, ])
+inj[1:6, ]
 
 # maps of total harm or damage by state
 map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "totaldmg")) {
@@ -118,11 +148,8 @@ map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "tot
         map.data <- map.data[order(map.data$order), ] ##re-order
         
         #cut count var for scale
-        map.data$damage <- as.character(map.data$damage)
-        map.data$damage <- as.numeric(map.data$damage)
-        
-        map.data$cut = cut(map.data$damage, breaks = c(seq(0, max(map.data$damage) * (8/9),
-                                                           by = max(map.data$damage) / 8), max(map.data$damage)))
+        map.data$cut = cut(map.data$damage, breaks = c(seq(0, max(map.data$damage),
+                                                           by = max(map.data$damage) / 9)))
         
         #plot
         ggplot(map.data, aes(long, lat, group = group)) +
