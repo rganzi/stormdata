@@ -1,5 +1,5 @@
 ---
-title: "Measuring Harmful Weather Events"
+title: "Calculating the Harmful Effects of Weather"
 output: html_document
 ---
 ## Synopsis
@@ -11,16 +11,23 @@ This analysis addresses the following questions:
 1. Across the U.S., which types of weather events are most harmful with respect to population health?  
 2. Across the U.S., which types of weather events have the greatest economic consequences?  
 
-The objective of this analysis is to prepare for severe weather events and prioritize resources for different types of events. The data come from the NOAA storm database, which tracks characteristics of major storms and weather events in the U.S. including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. 
+The objective of this analysis is to prepare for severe weather events and prioritize resources for different types of events. To this end, I have provided an analysis of the geographic distribution and trends over time of the harmful weather events.
+
+The data come from the NOAA storm database, which tracks characteristics of major storms and weather events in the U.S. including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. The data consist of 902,297 observations of 37 variables.
 
 ## Data Processing
-```{r dp.lib, message=FALSE}
+```{r lib, message=FALSE}
 library(lubridate)
 library(stats)
 library(Hmisc)
+library(ggplot2)
 ```
 
 ### Downloading the Data
+I chose to include only eight of the 37 original variables in the analysis. These were the weather event type (EVTYPE), the state (STATE), the weather event's starting date (BGN_DATE), and the outcome variables INJURIES, FATALITIES, PROPDMG, CROPDMG, and the associated EXP variable of the latter two. The remaining variables did not immediately further the analysis or were outside the scope of the project.
+
+The second download function creates a data set of the 48 official NOAA weather event types, as listed in page 6 of the National Weather Service's Storm Data Documentation, <https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf>.
+
 ```{r download.data, cache=TRUE}
 # download storm data
 fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
@@ -37,6 +44,7 @@ downloadData <- function() {
         names(data) <- tolower(names(data))
         data
 }
+
 data <- downloadData()
 data <- data[, c(2, 7:8, 23:28)]
 
@@ -50,11 +58,16 @@ evtype.download <- function() {
         evtype.off <- read.csv(file2name, header = FALSE, col.names = "evtype", 
                                colClasses = "character")
 }
+
 evtype.off <- evtype.download()
 ```
 
 ### Cleaning the Data
-```{r data.cleaning, warning=FALSE}
+Since the objective of the analysis is to specify harmful and damaging weather events, it was important that the event types variable be standardized to only include the 48 official types. In the original data set, there are 985 event types. When all the non-standard types are removed, 635,255 observations of 45 event types remain.
+
+I did not remove the non-standard, numerical exponent values. The standard letter values, "H", "K", "M", and "B" were replaced by "2", "3", "6", and "9," respectively. All "NA" values were converted to "0" so to have no effect when multiplying with the property and crop damage variables.
+
+```{r data.cleaning, warning=FALSE, cache=TRUE}
 # only include official NOAA storm data event types
 stormdata <- data[data$evtype %in% toupper(evtype.off$evtype), ]
 stormdata$evtype <- as.factor(tolower(stormdata$evtype))
@@ -88,14 +101,13 @@ stormdata <- stormdata[, -c(7,9)]
 ```
 
 ## Results
-```{r results.lib}
-library(ggplot2)
-```
+The Results section consists of four functions their output. The first gives the sum of total harm or damage done over the entire data set, split by weather event type. The second shows the geographic distribution of total harm or damage done over the period. The third calculates the frequency of a particular weather event over time. And the fourth shows the geographic distribution of individual weather events.
 
-### Total Harm or Damage Done
-```{r total.cost()}
+### 1. Total Harm and Damage Done
+```{r total.cost(), cache=TRUE}
 # tables of total damage by event type
 byevent <- split(stormdata, stormdata$evtype)
+
 cost <- function(cat) {
         df <- data.frame()
         for(i in 1:length(names(byevent))) {
@@ -105,6 +117,7 @@ cost <- function(cat) {
         names(df) <- c(cat)
         df
 }
+
 total.cost <- function() {
         category = c("injuries", "fatalities", "propdmg", "cropdmg", "totaldmg")
         df2 <- data.frame(names(byevent))
@@ -115,17 +128,32 @@ total.cost <- function() {
         }
         df2
 }
+
+damage <- total.cost()
 ```
 
-```{r damage.tables, cache=TRUE}
-damage <- total.cost()
-
+**Table 1. Total injuries by weather event type - Top 6**
+```{r injuries.table, cache=TRUE}
 # injuries
 inj <- damage[order(damage$injuries, decreasing = TRUE), c(1:2)]
 inj[1:6, ]
 ```
 
-### Geographic Distribution of Harm or Damage Done
+**Table 2. Total fatalities by weather event type - Top 6**
+```{r fatalities.table, cache=TRUE}
+# fatalities
+fat <- damage[order(damage$fatalities, decreasing = TRUE), c(1, 3)]
+fat[1:6, ]
+```
+
+**Table 3. Total property and crop damage by weather event type - Top 6**
+```{r propcropdmg.table, cache=TRUE}
+# total property dmg (including crop dmg)
+propcropdmg <- damage[order(damage$totaldmg, decreasing = TRUE), c(1, 6)]
+propcropdmg[1:6, ]
+```
+
+### 2. Geographic Distribution of Harm and Damage Done
 ```{r map.dmg()}
 # maps of total harm or damage by state
 map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "totaldmg")) {
@@ -149,9 +177,6 @@ map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "tot
         map.data <- map.data[order(map.data$order), ] ##re-order
         
         #cut count var for scale
-        map.data$damage <- as.character(map.data$damage)
-        map.data$damage <- as.numeric(map.data$damage)
-        
         map.data$cut = cut(map.data$damage, breaks = c(seq(0, max(map.data$damage) * (8/9),
                                                         by = max(map.data$damage) / 8), 
                                                         max(map.data$damage)))
@@ -168,11 +193,12 @@ map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "tot
 }
 ```
 
+**Fig. 1 Fatalities due to all weather events by state, 1950-2012**
 ```{r fatalities.map, cache=TRUE}
 map.dmg("fatalities")
 ```
 
-### Trends in Weather Events
+### 3. Trends in Weather Events
 ```{r ts()}
 # time-series function for event.type frequency
 ts <- function(type = evtype.off$evtype) {
@@ -180,12 +206,14 @@ ts <- function(type = evtype.off$evtype) {
         counts <- data.frame()
         
         for(i in 1:length(years)) {
-                count <- nrow(stormdata[year(stormdata$bgn_date) == years[i] & stormdata$evtype == type, ])
+                count <- nrow(stormdata[year(stormdata$bgn_date) == years[i] & 
+                                                stormdata$evtype == type, ])
                 counts <- rbind(counts, c(years[i], count))
         }
         names(counts) <- c("year", "count")
         counts
 }
+
 # plot function for ts
 plot.ts <- function(evtype = evtype.off$evtype) {
         set <- ts(evtype)
@@ -202,11 +230,12 @@ plot.ts <- function(evtype = evtype.off$evtype) {
 }
 ```
 
+**Fig. 2 Tornado frequency, 1950-2012**
 ```{r tornado.ts, cache=TRUE}
 plot.ts("tornado")
 ```
 
-### Geographic Distribution of Weather Events
+### 4. Geographic Distribution of Weather Events
 ```{r map.evtype()}
 # geographic distribution of event types
 map.evtype <- function(evtype = evtype$evtype) {
@@ -246,6 +275,13 @@ map.evtype <- function(evtype = evtype$evtype) {
 }
 ```
 
+**Fig. 3 Tornado reports by state, 1950-2012**
 ```{r tornado.map, cache=TRUE}
 map.evtype("tornado")
 ```
+
+## Discussion
+### Reporting Concerns
+The calculations of total harm and damage, frequencies, and geographic distributions all rely on the complete reporting of weather events. Unfortunately, a cursory look at the event trends casts serious doubt that every event was reported. No flood events were recorded prior to the mid-1990s, for example. More recent data appears to be more complete, and the calculations and rankings may be more accurate if the analysis were limited to these observations.
+
+The exculsion of non-official event types resulted in the loss of 265,000 observations from the original NOAA data set. Three types were never or no longer used. For example, no hurricane observations remained -- typically they were named in the raw data -- a non-standard practice. Ideally, these (hundreds of) unofficial types could be recoded and the lost observations recovered.
