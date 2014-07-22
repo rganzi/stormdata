@@ -36,6 +36,26 @@ evtype.download <- function() {
 }
 evtype.off <- evtype.download()
 
+sum(grepl("AVALANCHE", data$evtype))
+sum(grepl("AVALANCHE", stormdata$evtype))
+
+sum(grepl("AVALANCHE", data$evtype))
+sum(grepl("AVALANCHE", stormdata$evtype))
+
+
+sum(grepl("HURRICANE", data$evtype, perl=TRUE))
+sum(grepl("TYPHOON", data$evtype, perl=TRUE))
+hurricane.party <- grepl("HURRICANE", data$evtype, perl=TRUE) | grepl("TYPHOON", data$evtype, perl=TRUE)
+sum(hurricane.party)
+
+data$evtype[hurricane.party] <- "HURRICANE"
+sum(grepl("HURRICANE", data$evtype, perl=TRUE))
+
+trial <- "HURRICANE" %in% data$evtype
+
+
+evtype.off$evtype
+
 # only include official NOAA storm data event types
 stormdata <- data[data$evtype %in% toupper(evtype.off$evtype), ]
 stormdata$evtype <- as.factor(tolower(stormdata$evtype))
