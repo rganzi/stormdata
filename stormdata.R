@@ -31,8 +31,7 @@ evtype.download <- function() {
         if (!file.exists(file2name)) {
                 download.file(file2url, dest = file2name, method = "curl")
         }
-        evtype.off <- read.csv(file2name, header = FALSE, col.names = "evtype", 
-                               colClasses = "character")
+        evtype.off <- read.csv(file2name, header = TRUE, colClasses = "character", na.strings = "")
 }
 evtype.off <- evtype.download()
 
@@ -83,15 +82,80 @@ sum(grepl("FLASH FLOOD", stormdata$evtype, perl=TRUE)) #-1
 # sum(grepl("FLOOD", data$evtype, perl=TRUE))
 # sum(grepl("FLOOD", stormdata$evtype, perl=TRUE))
 
-sum(grepl("HURRICANE", data$evtype, perl=TRUE))
-sum(grepl("HURRICANE .TYPHOON.", evtype.off$evtype, perl=T))
-sum(grepl("FLASH.FLOOD.", data$evtype, perl=TRUE))
-sum(grepl("FLASH FLOOD", stormdata$evtype, perl=TRUE)) #-1
+sum(grepl("FROST", data$evtype, perl=TRUE)) #1401
+sum(grepl("FREEZE", data$evtype, perl=TRUE)) #1438
+sum(grepl("FROST", data$evtype, perl=TRUE) | grepl("FREEZE", data$evtype, perl=TRUE)) #1496
+sum(grepl("FROST/FREEZE", stormdata$evtype, perl=TRUE)) #1342
 
-sum(grepl("LAKE.EFFECT.SNOW", data$evtype, perl=TRUE))
-sum(grepl("LAKE.EFFECT SNOW", toupper(evtype.off$evtype), perl=TRUE))
+sum(grepl("FUNNEL", data$evtype, perl=TRUE)) #6986
+sum(grepl("FUNNEL.CLOUD.", data$evtype, perl=TRUE)) #89
+sum(grepl("FUNNEL CLOUD", stormdata$evtype, perl=TRUE)) #6839
 
-"MARINE HAIL" %in% toupper(evtype.off$evtype)
+# sum(grepl("FREEZING FOG", data$evtype, perl=TRUE)) #45
+# sum(grepl("FREEZING FOG", stormdata$evtype, perl=TRUE)) #45
+
+sum(grepl("HEAVY RAIN", data$evtype, perl=TRUE)) #11793
+sum(grepl("HEAVY RAIN.", data$evtype, perl=TRUE)) #55
+sum(grepl("HEAVY RAIN", stormdata$evtype, perl=TRUE)) #11723
+
+sum(grepl("HEAVY SNOW", data$evtype, perl=TRUE)) #15801
+sum(grepl("HEAVY SNOW.", data$evtype, perl=TRUE)) #83
+sum(grepl("HEAVY SNOW", stormdata$evtype, perl=TRUE)) #15708
+
+sum(grepl("HIGH SURF", data$evtype, perl=TRUE)) #959
+sum(grepl("HIGH SURF", stormdata$evtype, perl=TRUE)) #725
+
+sum(grepl("HIGH WIND", data$evtype, perl=TRUE)) #21951
+sum(grepl("HIGH WIND.", data$evtype, perl=TRUE)) #1599
+sum(grepl("HIGH WIND", stormdata$evtype, perl=TRUE)) #20347
+
+sum(grepl("ICE STORM", data$evtype, perl=TRUE)) #2032
+sum(grepl("ICE STORM.", data$evtype, perl=TRUE)) #2
+sum(grepl("ICE STORM", stormdata$evtype, perl=TRUE)) #2006
+
+sum(grepl("LAKE.EFFECT.SNOW", data$evtype, perl=TRUE)) #657
+# sum(grepl("LAKE.EFFECT SNOW", toupper(evtype.off$evtype), perl=TRUE))
+sum(grepl("LAKE.EFFECT.SNOW", stormdata$evtype, perl=TRUE)) #636
+
+sum(grepl("LAKESHORE.FLOOD", data$evtype, perl=TRUE)) #23
+sum(grepl("LAKESHORE FLOOD", stormdata$evtype, perl=TRUE)) #23
+
+sum(grepl("LIGHTNING", data$evtype, perl=TRUE)) #15776
+sum(grepl("LIGHTNING", stormdata$evtype, perl=TRUE)) #15754
+
+# sum(grepl("MARINE.HAIL", data$evtype, perl=TRUE)) #442
+# sum(grepl("MARINE HAIL", stormdata$evtype, perl=TRUE)) #442
+
+# sum(grepl("MARINE.HIGH.WIND", data$evtype, perl=TRUE)) #135
+# sum(grepl("MARINE.HIGH.WIND", stormdata$evtype, perl=TRUE)) #135
+
+# sum(grepl("MARINE STRONG WIND", data$evtype, perl=TRUE)) #48
+# sum(grepl("MARINE STRONG WIND", stormdata$evtype, perl=TRUE)) #48
+
+sum(grepl("MARINE.THUNDERSTORM", data$evtype, perl=TRUE)) #5812
+sum(grepl("MARINE THUNDERSTORM WIND", stormdata$evtype, perl=TRUE)) #5812
+
+sum(grepl("RIP.CURRENT", data$evtype, perl=TRUE)) #777
+sum(grepl("RIP.CURRENT.", data$evtype, perl=TRUE)) #307
+sum(grepl("RIP CURRENT", stormdata$evtype, perl=TRUE)) #470
+
+# sum(grepl("SEICHE", data$evtype, perl=TRUE)) #21
+# sum(grepl("SEICHE", stormdata$evtype, perl=TRUE)) #21
+
+sum(grepl("SLEET", data$evtype, perl=TRUE)) #121
+sum(grepl("SLEET.", data$evtype, perl=TRUE)) #28
+sum(grepl("SLEET", stormdata$evtype, perl=TRUE)) #59
+
+sum(grepl("STORM.SURGE", data$evtype, perl=TRUE)) #409
+sum(grepl("STORM SURGE/TIDE", stormdata$evtype, perl=TRUE)) #148
+
+sum(grepl("STRONG.WIND", data$evtype, perl=TRUE)) #3814
+sum(grepl("STRONG.WIND.", data$evtype, perl=TRUE)) #200
+sum(grepl("STRONG WIND", stormdata$evtype, perl=TRUE)) #3614
+
+sum(grepl("THUNDERSTORM.WIND", data$evtype, perl=TRUE)) #109445
+sum(grepl("TSTM.WIND", data$evtype, perl=TRUE)) #227228
+sum(grepl("THUNDERSTORM WIND", stormdata$evtype, perl=TRUE)) #88375
 
 sum(grepl("HURRICANE", data$evtype, perl=TRUE))
 sum(grepl("TYPHOON", data$evtype, perl=TRUE))
@@ -101,12 +165,18 @@ sum(hurricane.party)
 data$evtype[hurricane.party] <- "HURRICANE"
 sum(grepl("HURRICANE", data$evtype, perl=TRUE))
 
+# replace unofficial event types
+for (i in 1:length(evtype.off$evtype)) {
+        logic.vect <- grepl(evtype.off$match1[i], data$evtype, perl=TRUE) | grepl(evtype.off$match2[i], data$evtype, perl=TRUE)
+        data$evtype[logic.vect] <- evtype.off$evtype[i]
+}
 
-
+head(data$evtype)
+head(evtype.off$match1)
 evtype.off$evtype
 
 # only include official NOAA storm data event types
-stormdata <- data[data$evtype %in% toupper(evtype.off$evtype), ]
+stormdata <- data[toupper(data$evtype) %in% toupper(evtype.off$evtype), ]
 stormdata$evtype <- as.factor(tolower(stormdata$evtype))
 # rm(data)
 

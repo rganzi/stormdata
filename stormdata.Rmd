@@ -55,8 +55,7 @@ evtype.download <- function() {
         if (!file.exists(file2name)) {
                 download.file(file2url, dest = file2name, method = "curl")
         }
-        evtype.off <- read.csv(file2name, header = FALSE, col.names = "evtype", 
-                               colClasses = "character")
+        evtype.off <- read.csv(file2name, header = TRUE, colClasses = "character", na.strings = "")
 }
 
 evtype.off <- evtype.download()
@@ -68,8 +67,15 @@ Since the objective of the analysis is to specify harmful and damaging weather e
 I did not remove the non-standard, numerical exponent values. The standard letter values, "H", "K", "M", and "B" were replaced by "2", "3", "6", and "9," respectively. All "NA" values were converted to "0" so to have no effect when multiplying with the property and crop damage variables.
 
 ```{r data.cleaning, warning=FALSE, cache=TRUE}
+# replace unofficial event types
+for (i in 1:length(evtype.off$evtype)) {
+        logic.vect <- grepl(evtype.off$match1[i], data$evtype, perl=TRUE) | 
+                grepl(evtype.off$match2[i], data$evtype, perl=TRUE)
+        data$evtype[logic.vect] <- evtype.off$evtype[i]
+}
+
 # only include official NOAA storm data event types
-stormdata <- data[data$evtype %in% toupper(evtype.off$evtype), ]
+stormdata <- data[toupper(data$evtype) %in% toupper(evtype.off$evtype), ]
 stormdata$evtype <- as.factor(tolower(stormdata$evtype))
 #rm(data)
 
@@ -189,7 +195,7 @@ map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "tot
 Texas and Illinois suffer teh most fatalities from weather events followed by Missouri and Alabama.
 
 **Fig. 1 Fatalities due to all weather events by state, 1950-2012**
-```{r fatalities.map, cache=TRUE}
+```{r fatalities.map, cache=FALSE}
 map.dmg("fatalities")
 ```
 
@@ -230,7 +236,7 @@ plot.ts <- function(evtype = evtype.off$evtype) {
 The frequency of tornadoes appears to be increasing dramatically. This trend is likely a combination of changing weather patterns and inconsistency in reporting practices.
 
 **Fig. 2 Tornado frequency, 1950-2012**
-```{r tornado.ts, cache=TRUE}
+```{r tornado.ts, cache=FALSE}
 plot.ts("tornado")
 ```
 
@@ -279,7 +285,7 @@ map.evtype <- function(evtype = evtype$evtype) {
 Tornadoes have occurred most frequently in Texas, with Kansas and Oklahoma following in prevalence.
 
 **Fig. 3 Tornado reports by state, 1950-2012**
-```{r tornado.map, cache=TRUE}
+```{r tornado.map, cache=FALSE}
 map.evtype("tornado")
 ```
 
