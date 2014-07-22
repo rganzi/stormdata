@@ -36,12 +36,62 @@ evtype.download <- function() {
 }
 evtype.off <- evtype.download()
 
-sum(grepl("AVALANCHE", data$evtype))
-sum(grepl("AVALANCHE", stormdata$evtype))
+sum(grepl("LOW.TIDE", data$evtype, perl=TRUE))
+sum(grepl("LOW TIDE", stormdata$evtype, perl=TRUE)) #0
 
-sum(grepl("AVALANCHE", data$evtype))
-sum(grepl("AVALANCHE", stormdata$evtype))
+sum(grepl("AVALANCHE", data$evtype, perl=TRUE))
+sum(grepl("AVALANCHE", stormdata$evtype, perl=TRUE)) #-1
 
+sum(grepl("BLIZZARD", data$evtype, perl=TRUE))
+sum(grepl("BLIZZARD.", data$evtype, perl=TRUE))
+sum(grepl("BLIZZARD", stormdata$evtype, perl=TRUE)) #-13
+
+sum(grepl("COASTAL FLOOD", data$evtype, perl=TRUE))
+sum(grepl("COASTAL FLOOD.", data$evtype, perl=TRUE))
+sum(grepl("COASTAL FLOOD", stormdata$evtype, perl=TRUE)) #-3
+
+grep("DEBRIS", data$evtype, perl=TRUE, value=T) #0 matches
+sum(grepl("DEBRIS FLOW.", data$evtype, perl=TRUE))
+sum(grepl("DEBRIS FLOW", stormdata$evtype, perl=TRUE))
+
+sum(grepl("DENSE FOG", data$evtype, perl=TRUE))
+sum(grepl("DENSE FOG", stormdata$evtype, perl=TRUE)) #-3
+
+sum(grepl("SMOKE", data$evtype, perl=TRUE)) # <- "DENSE SMOKE"
+#grep("SMOKE", data$evtype, perl=TRUE, value=T)
+sum(grepl("DENSE SMOKE", stormdata$evtype, perl=TRUE))
+
+sum(grepl("DROUGHT", data$evtype, perl=TRUE))
+sum(grepl("DROUGHT.", data$evtype, perl=TRUE))
+sum(grepl("DROUGHT", stormdata$evtype, perl=TRUE)) #-11
+
+sum(grepl("DUST DEVIL", data$evtype, perl=TRUE))
+sum(grepl("DUST DEVIL.", data$evtype, perl=TRUE))
+sum(grepl("DUST DEVIL", stormdata$evtype, perl=TRUE)) #0
+
+sum(grepl("DUST STORM", data$evtype, perl=TRUE))
+sum(grepl("DUST STORM.", data$evtype, perl=TRUE))
+sum(grepl("DUST STORM", stormdata$evtype, perl=TRUE)) #-1
+
+sum(grepl("EXTREME COLD", data$evtype, perl=TRUE)) # <- EXTREME COLD/WIND CHILL +655
+sum(grepl("EXTREME COLD/WIND CHILL", stormdata$evtype, perl=TRUE))
+
+sum(grepl("FLASH FLOOD", data$evtype, perl=TRUE))
+sum(grepl("FLASH.FLOOD.", data$evtype, perl=TRUE))
+sum(grepl("FLASH FLOOD", stormdata$evtype, perl=TRUE)) #-1
+
+# sum(grepl("FLOOD", data$evtype, perl=TRUE))
+# sum(grepl("FLOOD", stormdata$evtype, perl=TRUE))
+
+sum(grepl("HURRICANE", data$evtype, perl=TRUE))
+sum(grepl("HURRICANE .TYPHOON.", evtype.off$evtype, perl=T))
+sum(grepl("FLASH.FLOOD.", data$evtype, perl=TRUE))
+sum(grepl("FLASH FLOOD", stormdata$evtype, perl=TRUE)) #-1
+
+sum(grepl("LAKE.EFFECT.SNOW", data$evtype, perl=TRUE))
+sum(grepl("LAKE.EFFECT SNOW", toupper(evtype.off$evtype), perl=TRUE))
+
+"MARINE HAIL" %in% toupper(evtype.off$evtype)
 
 sum(grepl("HURRICANE", data$evtype, perl=TRUE))
 sum(grepl("TYPHOON", data$evtype, perl=TRUE))
@@ -51,7 +101,6 @@ sum(hurricane.party)
 data$evtype[hurricane.party] <- "HURRICANE"
 sum(grepl("HURRICANE", data$evtype, perl=TRUE))
 
-trial <- "HURRICANE" %in% data$evtype
 
 
 evtype.off$evtype
