@@ -3,7 +3,7 @@ title: "Calculating the Harmful Effects of Weather"
 output: html_document
 ---
 ## Synopsis
-Peparing for future harmful and damaging weather events will require predicting the frequency of events and the amount of damage caused given the distribution of each event across the country. Historically, tornadoes are the most harmful weather event, and occur most frequently in Texas and other states in the middle of the country. Floods cause the most property and crop damage. This analysis lays the groundwork for preparing for future weather events.
+Preparing for harmful and damaging weather events will require predicting the frequency of events and the amount of damage caused given the distribution of each event across the country. Historically, tornadoes are the most harmful weather event, and occur most frequently in Texas and other states in the middle of the country. Floods cause the most property and crop damage. This analysis lays the groundwork for preparing for future weather events.
 
 ## Introduction
 This analysis addresses the following questions:  
@@ -26,8 +26,6 @@ library(ggplot2)
 ### Downloading the Data
 I chose to include only eight of the 37 original variables in the analysis. These were the weather event type (EVTYPE), the state (STATE), the weather event's starting date (BGN_DATE), and the outcome variables INJURIES, FATALITIES, PROPDMG, CROPDMG, and the associated EXP variable of the latter two. The remaining variables did not immediately further the analysis or were outside the scope of the project.
 
-The second download function creates a data set of the 48 official NOAA weather event types, as listed in page 6 of the [National Weather Service's Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf).
-
 ```{r download.data, cache=TRUE}
 # download storm data
 fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
@@ -44,7 +42,11 @@ downloadData <- function() {
         names(data) <- tolower(names(data))
         data
 }
+```
 
+The second download function creates a data set of the 48 official NOAA weather event types, as listed in page 6 of the [National Weather Service's Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf), and two sets of strings that will be used to clean the evtype variable in the storm data set.
+
+```{r download.noaa, cache=TRUE}
 data <- downloadData()
 data <- data[, c(2, 7:8, 23:28)]
 
@@ -62,11 +64,9 @@ evtype.off <- evtype.download()
 ```
 
 ### Cleaning the Data
-Since the objective of the analysis is to specify harmful and damaging weather events, it was important that the event types variable be standardized to only include the 48 official types. In the original data set, there are 985 event types. When all the non-standard types are removed, 635,255 observations of 45 event types remain.
+Since the objective of the analysis is to specify harmful and damaging weather events, it was important that the event types variable be standardized to only include the 48 official types. In the original data set, there are 985 event types. Using the `evtype.off` data set and regular expressions, I replaced the unofficial types with official ones, if possible. When all the non-standard types are removed, 890,572 observations remain.
 
-I did not remove the non-standard, numerical exponent values. The standard letter values, "H", "K", "M", and "B" were replaced by "2", "3", "6", and "9," respectively. All "NA" values were converted to "0" so to have no effect when multiplying with the property and crop damage variables.
-
-```{r data.cleaning, warning=FALSE, cache=TRUE}
+```{r data.cleaning, cache=TRUE}
 # replace unofficial event types
 for (i in 1:length(evtype.off$evtype)) {
         logic.vect <- grepl(evtype.off$match1[i], data$evtype, perl=TRUE) | 
@@ -81,7 +81,11 @@ stormdata$evtype <- as.factor(tolower(stormdata$evtype))
 
 # Date class
 stormdata$bgn_date <- as.Date(stormdata$bgn_date, format = "%m/%d/%Y")
+```
 
+I did not remove the non-standard, numerical exponent values. The standard letter values, "H", "K", "M", and "B" were replaced by "2", "3", "6", and "9," respectively. All "NA" values were converted to "0" so to have no effect when multiplying with the property and crop damage variables.
+
+```{r expcols, warning=FALSE, cache=FALSE}
 # replace abbreviations for *exp columns
 abbs <- c("H", "K", "M", "B")
 digs <- c(2, 3, 6, 9)
@@ -134,21 +138,21 @@ The following tables rank the harm and damage data by most harmful or damaging e
 # injuries
 total.cost(6, "injuries")
 ```
-Total tornado injuries are an order of magnitude greater than the next highest cause of injury (flood).
+Total tornado injuries are nearly an order of magnitude more frequent than the next most common cause of injury (thunderstorm wind).
 
 **Table 2. Total fatalities by weather event type - Top 6**
 ```{r fatalities.table, cache=FALSE}
 # fatalities
 total.cost(6, "fatalities")
 ```
-Tornadoes are significantly more fatal than other types of weather events.
+Tornadoes are significantly more fatal than other types of harmful weather events, like excessive heat.
 
 **Table 3. Total property and crop damage by weather event type - Top 6**
 ```{r propcropdmg.table, cache=FALSE}
 # total property dmg (including crop dmg)
 total.cost(6, "totaldmg")
 ```
-Flood causes the most total property and crop damage, followed by tornadoes.
+Floods cause the most total property and crop damage, followed by hurricanes (hurricane (typhoon)).
 
 ### 2. Geographic Distribution of Harm and Damage Done
 These weather events do not affect all areas of the country equally. And a policymaker preparing for weather events will likely want to know where funding will need to be dispersed. The second function creates a map of harm or damage done by state.
@@ -192,10 +196,10 @@ map.dmg <- function(dmg = c("injuries", "fatalities", "propdmg", "cropdmg", "tot
 }
 ```
 
-Texas and Illinois suffer teh most fatalities from weather events followed by Missouri and Alabama.
+Texas and Illinois suffer the most fatalities from weather events followed by Missouri, Alabama, and Florida.
 
 **Fig. 1 Fatalities due to all weather events by state, 1950-2012**
-```{r fatalities.map, cache=FALSE}
+```{r fatalities.map, cache=TRUE}
 map.dmg("fatalities")
 ```
 
@@ -216,7 +220,9 @@ ts <- function(type = evtype.off$evtype) {
         names(counts) <- c("year", "count")
         counts
 }
+```
 
+```{r plot.ts()}
 # plot function for ts
 plot.ts <- function(evtype = evtype.off$evtype) {
         set <- ts(evtype)
@@ -233,10 +239,10 @@ plot.ts <- function(evtype = evtype.off$evtype) {
 }
 ```
 
-The frequency of tornadoes appears to be increasing dramatically. This trend is likely a combination of changing weather patterns and inconsistency in reporting practices.
+The frequency of tornadoes appears to be increasing dramatically. This trend is likely a combination of real changing weather patterns and inconsistency in reporting practices.
 
 **Fig. 2 Tornado frequency, 1950-2012**
-```{r tornado.ts, cache=FALSE}
+```{r tornado.ts, cache=TRUE}
 plot.ts("tornado")
 ```
 
@@ -285,14 +291,12 @@ map.evtype <- function(evtype = evtype$evtype) {
 Tornadoes have occurred most frequently in Texas, with Kansas and Oklahoma following in prevalence.
 
 **Fig. 3 Tornado reports by state, 1950-2012**
-```{r tornado.map, cache=FALSE}
+```{r tornado.map, cache=TRUE}
 map.evtype("tornado")
 ```
 
 ## Discussion
-The calculations of total harm and damage, frequencies, and geographic distributions all rely on the complete reporting of weather events. Unfortunately, a cursory look at the event trends casts serious doubt that every event was reported. No flood events were recorded prior to the mid-1990s, for example. More recent data appears to be more complete, and the calculations and rankings may be more accurate if the analysis were limited to these observations.
-
-The exculsion of non-official event types resulted in the loss of 265,000 observations from the original NOAA data set. Three types were never or no longer used. For example, no hurricane observations remained -- typically they were named in the raw data -- a non-standard practice. Ideally, these (hundreds of) unofficial types could be recoded and the lost observations recovered.
+The calculations of total harm and damage, frequencies, and geographic distributions all rely on the complete reporting of weather events. Unfortunately, a cursory look at the event trends casts serious doubt that every event was reported. More recent data appears to be more complete, and the calculations and rankings may be more accurate if the analysis were limited to these observations.
 
 ## Conclusion
-Peparing for future harmful and damaging weather events will require predicting the frequency of events and the amount of damage caused given the distribution of each event across the country. This analysis lays the groundwork for such a preparation.
+Preparing for future harmful and damaging weather events will require predicting the frequency of events and the amount of damage caused given the distribution of each event across the country. This analysis lays the groundwork for such a preparation.
